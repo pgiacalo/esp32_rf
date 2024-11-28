@@ -18,9 +18,9 @@ void dac_task(void *pvParameters)
         for(int i = 0; i < 256; i++) {
             uint8_t value = 128 + 127 * sin(2 * M_PI * i / 256.0);
             dac_oneshot_output_voltage(dac_handle, value);
-            vTaskDelay(1);  // Give other tasks a chance to run
+            vTaskDelay(1);
         }
-        vTaskDelay(1);  // Extra delay to ensure watchdog is satisfied
+        vTaskDelay(1);
     }
 }
 
@@ -31,7 +31,7 @@ void app_main(void)
         .clk_src = RMT_CLK_SRC_DEFAULT,
         .gpio_num = 18,
         .mem_block_symbols = 64,
-        .resolution_hz = 80000000, // 80MHz APB clock
+        .resolution_hz = 1000000, // Reduced to 1MHz for cleaner timing
         .trans_queue_depth = 4,
         .flags.with_dma = false,
     };
@@ -39,10 +39,10 @@ void app_main(void)
     rmt_channel_handle_t tx_chan = NULL;
     ESP_ERROR_CHECK(rmt_new_tx_channel(&tx_chan_config, &tx_chan));
 
-    // Configure carrier - using 1MHz as an example
+    // Configure carrier - using 100kHz as an example
     rmt_carrier_config_t carrier_config = {
         .duty_cycle = 0.5,
-        .frequency_hz = 1000000, // 1MHz carrier frequency
+        .frequency_hz = 100000, // Reduced to 100kHz for cleaner output
         .flags.polarity_active_low = false,
     };
     ESP_ERROR_CHECK(rmt_apply_carrier(tx_chan, &carrier_config));
@@ -58,9 +58,9 @@ void app_main(void)
     };
     ESP_ERROR_CHECK(dac_oneshot_new_channel(&dac_config, &dac_handle));
 
-    // Create a simple pattern for RMT
+    // Create a simple pattern for RMT with longer durations
     rmt_symbol_word_t pattern[2] = {
-        {.duration0 = 100, .level0 = 1, .duration1 = 100, .level1 = 0},
+        {.duration0 = 500, .level0 = 1, .duration1 = 500, .level1 = 0},
         {.duration0 = 0, .level0 = 0, .duration1 = 0, .level1 = 0}
     };
 
